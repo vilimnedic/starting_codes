@@ -1,8 +1,8 @@
-# Define packages
-packages <- c(# Standard packages
-              "tidyverse", "ggplot2", "dplyr",
-              # Specific packages for task
-              "foreign")
+## Example code for packages
+## packages <- c(# Standard packages
+##               "tidyverse", "ggplot2", "dplyr",
+##               # Specific packages for task
+##               "foreign")
 
 ## Now load or install&load all
 package.check <- lapply(
