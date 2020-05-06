@@ -1,4 +1,8 @@
-# Causal inference: Computer lab 
+####
+####
+#### Causal inference: Computer lab 
+####
+####
 mu_t <- data %>% 
   filter(swang1 == 1) %>% 
   select(-id) %>% 
