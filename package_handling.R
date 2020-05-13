@@ -26,3 +26,6 @@ package.check <- lapply(
 # Step 3: Look up the package in CRAN-mirror and see if you have wrong client
 # library(installr)
 # updateR()
+
+# Detach packages
+# detach("package:dplyr", unload = TRUE)
