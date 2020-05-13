@@ -29,3 +29,7 @@ package.check <- lapply(
 
 # Detach packages
 # detach("package:dplyr", unload = TRUE)
+
+# Check if packages are loaded
+# loaded_packages <- library()$results[, 1]
+# "package_name" %in% tolower(loaded_packages)
