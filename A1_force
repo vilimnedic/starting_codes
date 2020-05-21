@@ -1,0 +1,86 @@
+# First attempt on automation using eval(parse()). 
+
+Answers_1D <- function (data) {
+  datad.new <- data
+  seq_treats <- datad.new$W
+  # Subsetting data frames
+  for (i in seq_factorlevels) {
+    for (j in seq_treats) {
+      assign(paste0("data_filt_", i, j), 
+             datad.new %>% 
+               filter(datad.new$B == i & datad.new$W == j))
+      # attach(eval(parse(text = paste0("data_filt_", i, j)))) ?
+    }
+    # \bar{Yobs}_1 - \bar{Yobs}_0
+    assign(paste0("ate_tau_", i), 
+           mean(eval(parse(text = paste0("data_filt_", i, 1)))$Yobs ) - 
+             mean(eval(parse(text = paste0("data_filt_", i, 0)))$Yobs)) 
+  }
+  
+  # Calculating ATE
+  ATE_taus <- vector(mode = "numeric", length = length(seq_factorlevels))
+  for (i in seq_factorlevels) {
+    ATE_taus[i] <- eval(parse(text = paste0("ate_tau_", i)))
+  }
+  
+  # Creating weights
+  for (i in seq_factorlevels) {
+    assign(paste0("qj_", i), length(which(datad.new$B == i)) / nrow(datad.new))
+  }
+  qjs <- vector(mode = "numeric", length = length(seq_factorlevels))
+  for (i in seq_factorlevels) {
+    qjs[i] <- eval(parse(text = paste0("qj_", i))) 
+  }
+  
+  # ATE
+  tau_strat_hat <- sum(ATE_taus * qjs)
+  
+  # Calculating Variance
+  # Starting with obtaining number of treated and controls in each block
+  # Observe that i and j change in this for loop
+  for (i in seq_treats) {
+    for (j in seq_factorlevels){
+      if (i == 0) {
+        assign(paste0("n_c", j), 
+               as.numeric(datad.new %>% filter(W == i & B == j) %>% count()))
+      } else if (i == 1) {
+        assign(paste0("n_t", j), 
+               as.numeric(datad.new %>% filter(W == i & B == j) %>% count()))
+      }
+    }
+  }
+  
+  # Variance within each block P. 389
+  for (i in seq_factorlevels) {
+    assign(paste0("var_t_diff_", i), 
+           (1 / (
+             eval(parse(text = paste0("n_c", i))) * (eval(parse(text = paste0("n_c", i))) - 1)) ) * 
+             sum( (eval(parse(text = paste0("data_filt_", i, 0)))$Yobs - 
+                     mean(eval(parse(text = paste0("data_filt_", i, 0)))$Yobs))^2 ) + 
+             (1 / (
+               eval(parse(text = paste0("n_t", i))) * (eval(parse(text = paste0("n_t", i))) - 1)) ) * 
+             sum( (eval(parse(text = paste0("data_filt_", i, 1)))$Yobs - 
+                     mean(eval(parse(text = paste0("data_filt_", i, 1)))$Yobs))^2 )     
+    )
+  }
+  var_t_strats <- vector(mode = "numeric", length = length(seq_factorlevels))
+  for (i in seq_factorlevels) {
+    var_t_strats[i] <- eval(parse(text = paste0("var_t_diff_", i))) 
+  }
+  
+  var_t_strat <- sum(var_t_strats * qjs^2)
+  
+  my_list <- list("ate_taus" = ATE_taus,
+                  "tau_strat_hat" = tau_strat_hat,
+                  "var_t_strats" = var_t_strats, 
+                  "total_variance" = var_t_strat)    
+  
+  return(my_list)
+  
+  # One argument for not using eval(parse(...)) is having a messy environment. 
+  rm(list = ls(pattern = "var_t_diff_"))
+  rm(list = ls(pattern = "n_"))
+  rm(list = ls(pattern = "ate_tau_"))
+  rm(list = ls(pattern = "qj_"))
+  rm(list = ls(pattern = "data_filt_"))
+}
